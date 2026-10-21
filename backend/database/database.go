@@ -12,9 +12,11 @@ import (
 var db *gorm.DB
 
 func Connect() *gorm.DB {
-	if err := os.Mkdir("files", 0755); err != nil {
-		log.Fatal("Erro ao criar pasta: ", err)
-		return nil
+	if _, err := os.Stat("files"); os.IsNotExist(err) {
+		if err := os.Mkdir("files", 0755); err != nil {
+			log.Fatal("Erro ao criar pasta: ", err)
+			return nil
+		}
 	}
 
 	database, err := gorm.Open(sqlite.Open("files/database.sqlite"), &gorm.Config{})
