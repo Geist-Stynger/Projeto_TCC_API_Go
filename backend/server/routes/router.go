@@ -17,6 +17,11 @@ func ConfigRoutes(router *gin.Engine) *gin.Engine {
 			arquivo.PUT("/update", controllers.AtualizarArquivo)
 			arquivo.DELETE("/delete/:id", controllers.DeletarArquivo)
 		}
+
+		usuario := main.Group("usuarios")
+		{
+			usuario.POST("/create", controllers.AdicionarUsuario)
+		}
 	}
 
 	return router

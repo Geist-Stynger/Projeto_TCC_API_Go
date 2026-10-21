@@ -7,8 +7,6 @@ import (
 
 func main() {
 	database.Connect()
-
 	server := server.NewServer()
-
 	server.Run()
 }
