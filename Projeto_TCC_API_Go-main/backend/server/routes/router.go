@@ -24,6 +24,14 @@ func ConfigRoutes(router *gin.Engine) *gin.Engine {
 			usuario.PUT("/update/:id", controllers.AlterarUsuario)
 			usuario.DELETE("/delete/:id", controllers.ExcluirUsuario)
 		}
+		categoria := main.Group("categorias")
+		{
+			categoria.POST("/create", controllers.CriarCategoria)
+			categoria.GET("/read/:id", controllers.BuscarCategoria)
+			categoria.GET("/read_all", controllers.BuscarTodasAsCategorias)
+			categoria.PUT("/update", controllers.AtualizarCategoria)
+			categoria.DELETE("/delete/:id", controllers.DeletarCategoria)
+		}
 	}
 
 	return router
