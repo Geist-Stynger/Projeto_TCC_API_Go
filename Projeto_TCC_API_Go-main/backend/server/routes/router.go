@@ -32,6 +32,11 @@ func ConfigRoutes(router *gin.Engine) *gin.Engine {
 			categoria.PUT("/update", controllers.AtualizarCategoria)
 			categoria.DELETE("/delete/:id", controllers.DeletarCategoria)
 		}
+		log := main.Group("logs")
+		{
+			log.GET("/read_all", controllers.BuscarLogs)
+			log.GET("/read_all/:id", controllers.BuscarTodosLogsPorUsuario)
+		}
 	}
 
 	return router

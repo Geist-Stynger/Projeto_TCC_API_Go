@@ -83,7 +83,7 @@ func ExcluirUsuario(c *gin.Context) {
 	})
 }
 
-
+ 
 //Nosso Update do usuario
 func AlterarUsuario(c *gin.Context){
 	db := database.GetDatabase()

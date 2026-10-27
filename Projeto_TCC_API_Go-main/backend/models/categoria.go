@@ -10,5 +10,6 @@ type Categoria struct {
 
 func (c *Categoria) Validate() error {
 	validate := validator.New()
+	validate.SetTagName("binding")
 	return validate.Struct(c)
 }

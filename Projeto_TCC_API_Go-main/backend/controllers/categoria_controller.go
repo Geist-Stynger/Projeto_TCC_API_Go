@@ -3,6 +3,7 @@ package controllers
 import (
 	"file_management_tcc/database"
 	"file_management_tcc/models"
+	"file_management_tcc/utils"
 	"strconv"
 	"github.com/gin-gonic/gin"
 )
@@ -80,20 +81,30 @@ func AtualizarCategoria(c *gin.Context) {
 		})
 		return
 	}
-	if validationError := categoria.Validate(); validationError != nil {
+	if categoria.ID == 0 {
 		c.JSON(400, gin.H{
-			"error": validationError.Error(),
+			"error": "ID da categoria inválido",
 		})
 		return
 	}
-	error := db.Save(&categoria).Error
-	if error != nil {
+	change := db.Model(&models.Categoria{}).
+	Where("id = ?", categoria.ID).
+	Updates(categoria)
+	if change.Error != nil {
 		c.JSON(400, gin.H{
-			"error": error.Error(),
+			"error": change.Error.Error(),
 		})
 		return
 	}
-	c.JSON(200, categoria)
+	if change.RowsAffected == 0 {
+		c.JSON(404, gin.H{
+			"error": "Categoria não encontrada",
+		})
+		return
+	}
+	c.JSON(200, gin.H{
+		"message": "Categoria atualizada com sucesso",
+	})
 }
 func DeletarCategoria(c *gin.Context) {
 	id := c.Param("id")
