@@ -26,7 +26,9 @@ func Connect() *gorm.DB {
 	}
 	db = database
 
-	migrations.RunMigrations(db)
+	if err :=migrations.RunMigrations(db); err != nil {
+		log.Fatal("Erro ao executar migrações: ", err)
+	}
 
 	return db
 }

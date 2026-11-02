@@ -14,6 +14,7 @@ type Usuario struct {
 
 func (u *Usuario) Validate() error {
 	validate := validator.New()
+	validate.SetTagName("binding")
 	return validate.Struct(u)
 }
 

@@ -5,7 +5,7 @@ import (
 	"file_management_tcc/models"
 )
 
-func GerarLog(message string, userId int, action string) {
+func GerarLog(message string, userId int, action string) error {
 	db := database.GetDatabase()
 	log := models.Log{
 		Message: message,
@@ -13,5 +13,5 @@ func GerarLog(message string, userId int, action string) {
 		Action:  action,
 	}
 
-	db.Create(&log)
+	return db.Create(&log).Error
 }

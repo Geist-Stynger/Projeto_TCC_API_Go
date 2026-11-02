@@ -35,7 +35,7 @@ func BuscarTodosLogsPorUsuario(c *gin.Context) {
 	
 	var logs []models.Log
 	
-	resultado := database.GetDatabase().Where("IDUsuario = ?", newid).Find(&logs)
+	resultado := database.GetDatabase().Where("user_id = ?", newid).Find(&logs)
 	if resultado.Error != nil {
 		c.JSON(500, gin.H{
 			"error": resultado.Error.Error(),

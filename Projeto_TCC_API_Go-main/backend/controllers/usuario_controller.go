@@ -48,38 +48,22 @@ func AdicionarUsuario(c *gin.Context) {
 //Nosso DELETE de usuario
 func ExcluirUsuario(c *gin.Context) {
 	db := database.GetDatabase()
-	var usuario models.Usuario
+	id := c.Param("id")
 
-	error := c.ShouldBindJSON(&usuario)
-	if error != nil {
-		c.JSON(400, gin.H{
-			"error": error.Error(),
-		})
-		return
-	}
-	if usuario.IDUsuario == 0 {
-		c.JSON(400, gin.H{
-			"error": "ID do usuário inválido",
-		})
-		return
-	}
-	resultado := db.Delete(&models.Usuario{}, usuario.IDUsuario)
-	
+	resultado := db.Delete(&models.Usuario{}, id)
+
 	if resultado.Error != nil {
-		c.JSON(500, gin.H{
-			"error": resultado.Error.Error(),
-		})
+		c.JSON(500, gin.H{"error": resultado.Error.Error()})
 		return
 	}
+
 	if resultado.RowsAffected == 0 {
-		c.JSON(404, gin.H{
-			"error": "Usuario não encontrado",
-		})
+		c.JSON(404, gin.H{"error": "Usuário não encontrado"})
 		return
 	}
 	c.JSON(200, gin.H{
 		"message": "Usuario excluido com sucesso",
-		"id_usuario": usuario.IDUsuario,
+		"id_usuario": id,
 	})
 }
 
@@ -87,45 +71,43 @@ func ExcluirUsuario(c *gin.Context) {
 //Nosso Update do usuario
 func AlterarUsuario(c *gin.Context){
 	db := database.GetDatabase()
-	var usuario models.Usuario
+	
+	id := c.Param("id")
 
-	error:= c.ShouldBindJSON(&usuario)
-	if error != nil {
-		c.JSON(400, gin.H{
-			"error": error.Error(),
-		})
+	var dados struct {
+		Apelido string `json:"apelido"`
+		Email   string `json:"email"`
+	}
+
+	if err := c.ShouldBindJSON(&dados); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	if usuario.IDUsuario == 0 {
-		c.JSON(400, gin.H{
-			"error": "ID de usuário inválido",
-		})
+	
+	if dados.Apelido == "" || dados.Email == "" {
+		c.JSON(400, gin.H{"error": "Apelido e email são obrigatórios"})
 		return
 	}
-	alteracao := db.Model(&models.Usuario{}).
-	Where("id_usuario = ?", usuario.IDUsuario).
+	alteracao := db.Model(&models.Usuario{}). 
+	Where("id_usuario = ?", id).
 	Updates(map[string]interface{}{
-		"apelido": usuario.Apelido,
-		"email": usuario.Email,
+		"apelido": dados.Apelido,
+		"email":   dados.Email,
 	})
+
 	if alteracao.Error != nil {
-		c.JSON(500, gin.H{
-			"error": alteracao.Error.Error(),
-		})
+		c.JSON(500, gin.H{"error": alteracao.Error.Error()})
 		return
 	}
+
 	if alteracao.RowsAffected == 0 {
-		c.JSON(404, gin.H{
-			"error": "Usuário não localizado ou nenhum dado alterado",
-		})
+		c.JSON(404, gin.H{"error": "Usuário não encontrado ou nenhum dado alterado"})
 		return
 	}
 	c.JSON(200, gin.H{
-		"message": "Usuário alterado com sucesso",
-		"id_usuario": usuario.IDUsuario,
+		"message": "Usuário atualizado com sucesso",
 	})
 }
-
 
 //O READ do usuario
 func BuscarUsuario(c *gin.Context) {
