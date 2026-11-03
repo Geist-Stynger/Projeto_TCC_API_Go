@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
+
 func ConfigRoutes(router *gin.Engine) *gin.Engine {
 	main := router.Group("api/v1")
 	{
@@ -12,8 +13,8 @@ func ConfigRoutes(router *gin.Engine) *gin.Engine {
 		{
 			arquivo.POST("/create", controllers.AdicionarArquivo)
 			arquivo.GET("/read/:id", controllers.BuscarArquivo)
-			arquivo.GET("/read_all", controllers.BuscarTodosOsArquivos)
-			arquivo.PUT("/update", controllers.AtualizarArquivo)
+			arquivo.GET("/read_all/:usuario_id", controllers.BuscarTodosOsArquivos)
+			arquivo.PUT("/update/:id", controllers.AtualizarArquivo)
 			arquivo.DELETE("/delete/:id", controllers.DeletarArquivo)
 		}
 
@@ -29,7 +30,7 @@ func ConfigRoutes(router *gin.Engine) *gin.Engine {
 			categoria.POST("/create", controllers.CriarCategoria)
 			categoria.GET("/read/:id", controllers.BuscarCategoria)
 			categoria.GET("/read_all", controllers.BuscarTodasAsCategorias)
-			categoria.PUT("/update", controllers.AtualizarCategoria)
+			categoria.PUT("/update/:id", controllers.AtualizarCategoria)
 			categoria.DELETE("/delete/:id", controllers.DeletarCategoria)
 		}
 		log := main.Group("logs")

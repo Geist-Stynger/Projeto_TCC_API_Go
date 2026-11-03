@@ -9,32 +9,32 @@ import (
 )
 
 func BuscarLogs(c *gin.Context) {
-	db:= database.GetDatabase()
+	db := database.GetDatabase()
 	var logs []models.Log
 
 	error := db.Find(&logs).Error
 	if error != nil {
-		c.JSON(400, gin.H{
+		c.JSON(500, gin.H{
 			"error": error.Error(),
 		})
-	} else {
-		c.JSON(200, logs)
+		return
 	}
+	c.JSON(200, logs)
 }
 func BuscarTodosLogsPorUsuario(c *gin.Context) {
 
 	id := c.Param("id")
-	
-	newid, error := strconv.ParseUint(id, 10, 64)
-	if error != nil {
+
+	newid, error := strconv.Atoi(id)
+	if error != nil || newid <= 0 {
 		c.JSON(400, gin.H{
 			"error": "ID inválido",
 		})
 		return
 	}
-	
+
 	var logs []models.Log
-	
+
 	resultado := database.GetDatabase().Where("user_id = ?", newid).Find(&logs)
 	if resultado.Error != nil {
 		c.JSON(500, gin.H{
@@ -43,5 +43,5 @@ func BuscarTodosLogsPorUsuario(c *gin.Context) {
 		return
 	}
 	c.JSON(200, logs)
-	
+
 }

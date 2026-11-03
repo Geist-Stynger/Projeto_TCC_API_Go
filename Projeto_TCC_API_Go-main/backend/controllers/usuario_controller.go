@@ -4,6 +4,7 @@ import (
 	"file_management_tcc/database"
 	"file_management_tcc/models"
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 )
 //O nosso CREATE de usuario
 func AdicionarUsuario(c *gin.Context) {
@@ -11,6 +12,7 @@ func AdicionarUsuario(c *gin.Context) {
 	var usuario models.Usuario
 
 	error := c.ShouldBindJSON(&usuario)
+
 	if error != nil {
 		c.JSON(400, gin.H{"error": error.Error()})
 		return
@@ -20,6 +22,12 @@ func AdicionarUsuario(c *gin.Context) {
 		return
 	}
 
+	var usuarioExistente models.Usuario
+	if err := db.Where("email = ?", usuario.Email). 
+	First(&usuarioExistente).Error; err == nil {
+		c.JSON(409, gin.H{"error": "Este e-mail já está cadastrado"})
+		return
+	}
 	error = usuario.HashPassword()
 	if error != nil {
 		c.JSON(500, gin.H{"error": "Erro ao proteger a senha"})
@@ -81,6 +89,13 @@ func AlterarUsuario(c *gin.Context){
 
 	if err := c.ShouldBindJSON(&dados); err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	validate := validator.New()
+
+	if err := validate.Var(dados.Email, "email"); err != nil {
+		c.JSON(400, gin.H{"error": "E-mail inválido"})
 		return
 	}
 	

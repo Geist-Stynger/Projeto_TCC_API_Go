@@ -18,7 +18,7 @@ import (
 
 func AdicionarArquivo(c *gin.Context) {
 	db := database.GetDatabase()
-	
+
 	arquivoRecebido, err := c.FormFile("arquivo")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -34,6 +34,11 @@ func AdicionarArquivo(c *gin.Context) {
 	}
 
 	descricao := c.PostForm("descricao")
+	if strings.TrimSpace(descricao) == "" {
+		c.JSON(400, gin.H{"error": "Descrição não pode ser vazia"})
+		return
+	}
+
 	categoriaID, err := strconv.ParseUint(c.PostForm("categoria_id"), 10, 64)
 	if err != nil || categoriaID == 0 {
 		c.JSON(400, gin.H{"error": "Categoria inválida"})
@@ -150,7 +155,7 @@ func BuscarTodosOsArquivos(c *gin.Context) {
 func AtualizarArquivo(c *gin.Context) {
 	db := database.GetDatabase()
 	id := c.Param("id")
-	
+
 	newid, err := strconv.Atoi(id)
 	if err != nil || newid <= 0 {
 		c.JSON(400, gin.H{
@@ -158,7 +163,7 @@ func AtualizarArquivo(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	var arquivo models.Arquivo
 
 	err = db.First(&arquivo, newid).Error
@@ -189,13 +194,13 @@ func AtualizarArquivo(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	err = db.Model(&arquivo).Updates(map[string]interface{}{
 		"descricao":      novosDados.Descricao,
 		"categoria_id":   novosDados.CategoriaID,
 		"data_alteracao": time.Now(),
 	}).Error
-	
+
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": "Erro ao atualizar arquivo",
@@ -214,7 +219,6 @@ func AtualizarArquivo(c *gin.Context) {
 	c.JSON(200, arquivo)
 }
 
-
 func DeletarArquivo(c *gin.Context) {
 	id := c.Param("id")
 
@@ -231,8 +235,8 @@ func DeletarArquivo(c *gin.Context) {
 
 	error = db.First(&arquivo, newid).Error
 	if error != nil {
-		c.JSON(400, gin.H{
-			"error": error.Error(),
+		c.JSON(404, gin.H{
+			"error": "Arquivo não encontrado",
 		})
 		return
 	}
