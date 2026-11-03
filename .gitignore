@@ -1,0 +1,17 @@
+files/
+apimvc-go-mini-curso-main/
+
+# Variáveis de ambiente locais
+.env
+.env.*
+
+# Banco SQLite local
+backend/files/*.sqlite
+backend/files/*.sqlite-journal
+
+# arquivos temporários e builds locais
+*.log
+/tmp/
+.DS_Store
+
+backend/test_api.sh

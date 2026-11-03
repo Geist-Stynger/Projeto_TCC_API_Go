@@ -3,6 +3,7 @@ package server
 import (
 	"file_management_tcc/server/routes"
 	"log"
+	"os"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,8 +14,13 @@ type Server struct {
 }
 
 func NewServer() Server {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
 	return Server{
-		port:   "8080",
+		port:   port,
 		server: gin.Default(),
 	}
 }
