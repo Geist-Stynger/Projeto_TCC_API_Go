@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"file_management_tcc/database"
 	"file_management_tcc/models"
 	"io"
@@ -13,6 +14,22 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
+
+func obterCaminhoArmazenamento(caminhoRelativo string) (string, error) {
+	storageRoot := filepath.Join("files", "storage")
+	rootAbs, err := filepath.Abs(storageRoot)
+	if err != nil {
+		return "", err
+	}
+
+	caminhoAlvo := filepath.Join(rootAbs, filepath.FromSlash(caminhoRelativo))
+	rel, err := filepath.Rel(rootAbs, caminhoAlvo)
+	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
+		return "", errors.New("caminho fora da área de armazenamento permitida")
+	}
+
+	return caminhoAlvo, nil
+}
 
 func AdicionarArquivo(c *gin.Context) {
 	db := database.GetDatabase()
@@ -222,8 +239,15 @@ func AdicionarArquivo(c *gin.Context) {
 		return
 	}
 
+	db.Create(&models.Log{
+		Action:  "UPLOAD",
+		Message: "Arquivo '" + nome + "' enviado com sucesso",
+		UserID:  int(userID),
+	})
+
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Arquivo armazenado com sucesso",
+		"data":    arquivo,
 	})
 
 }
@@ -256,22 +280,79 @@ func BuscarArquivo(c *gin.Context) {
 func BuscarTodosOsArquivos(c *gin.Context) {
 	db := database.GetDatabase()
 	var arquivos []models.Arquivo
-	usuarioID, err := strconv.ParseUint(c.Param("usuario_id"), 10, 64)
 
-	if err != nil || usuarioID == 0 {
-		c.JSON(400, gin.H{"error": "Usuário inválido"})
-		return
+	var usuarioID uint64
+	paramUsuarioID := c.Param("usuario_id")
+
+	if paramUsuarioID != "" {
+		id, err := strconv.ParseUint(paramUsuarioID, 10, 64)
+		if err != nil || id == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Usuário inválido"})
+			return
+		}
+		usuarioID = id
+	} else if val, exists := c.Get("user_id"); exists {
+		if uid, ok := val.(uint); ok {
+			usuarioID = uint64(uid)
+		}
 	}
 
-	error := db.Where("usuario_id = ?", usuarioID).Find(&arquivos).Error
-	if error != nil {
-		c.JSON(400, gin.H{
-			"error": error.Error(),
+	query := db
+	if usuarioID > 0 {
+		query = query.Where("usuario_id = ?", usuarioID)
+	}
+
+	if err := query.Find(&arquivos).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
 		})
 		return
 	}
 
-	c.JSON(200, arquivos)
+	c.JSON(http.StatusOK, arquivos)
+}
+
+func DownloadArquivo(c *gin.Context) {
+	id := c.Param("id")
+
+	newid, err := strconv.Atoi(id)
+	if err != nil || newid <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "ID inválido",
+		})
+		return
+	}
+
+	db := database.GetDatabase()
+	var arquivo models.Arquivo
+
+	if err := db.First(&arquivo, newid).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "Arquivo não encontrado",
+		})
+		return
+	}
+
+	caminhoFisico, err := obterCaminhoArmazenamento(arquivo.Caminho)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Caminho do arquivo inválido",
+		})
+		return
+	}
+
+	if _, err := os.Stat(caminhoFisico); os.IsNotExist(err) {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "Arquivo físico não encontrado no servidor",
+		})
+		return
+	}
+
+	if c.Query("inline") == "true" {
+		c.File(caminhoFisico)
+	} else {
+		c.FileAttachment(caminhoFisico, arquivo.Nome)
+	}
 }
 
 func AtualizarArquivo(c *gin.Context) {
@@ -344,10 +425,10 @@ func AtualizarArquivo(c *gin.Context) {
 func DeletarArquivo(c *gin.Context) {
 	id := c.Param("id")
 
-	newid, error := strconv.Atoi(id)
-	if error != nil {
-		c.JSON(400, gin.H{
-			"error": error.Error(),
+	newid, err := strconv.Atoi(id)
+	if err != nil || newid <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "ID inválido",
 		})
 		return
 	}
@@ -355,26 +436,35 @@ func DeletarArquivo(c *gin.Context) {
 	db := database.GetDatabase()
 	var arquivo models.Arquivo
 
-	error = db.First(&arquivo, newid).Error
-	if error != nil {
-		c.JSON(404, gin.H{
+	if err := db.First(&arquivo, newid).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
 			"error": "Arquivo não encontrado",
 		})
 		return
 	}
-	error = os.Remove(arquivo.Caminho)
-	if error != nil {
-		c.JSON(500, gin.H{
-			"error": "Erro ao deletar arquivo do sistema",
+
+	caminhoFisico, err := obterCaminhoArmazenamento(arquivo.Caminho)
+	if err == nil {
+		if err := os.Remove(caminhoFisico); err != nil && !os.IsNotExist(err) {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Erro ao deletar arquivo do sistema",
+			})
+			return
+		}
+	}
+
+	if err := db.Delete(&models.Arquivo{}, newid).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Erro ao deletar arquivo do banco de dados",
 		})
 		return
 	}
-	error = db.Delete(&models.Arquivo{}, newid).Error
-	if error != nil {
-		c.JSON(400, gin.H{
-			"error": error.Error(),
-		})
-		return
-	}
-	c.Status(204)
+
+	db.Create(&models.Log{
+		Action:  "DELETE",
+		Message: "Arquivo '" + arquivo.Nome + "' excluído com sucesso",
+		UserID:  int(arquivo.UsuarioID),
+	})
+
+	c.Status(http.StatusNoContent)
 }
