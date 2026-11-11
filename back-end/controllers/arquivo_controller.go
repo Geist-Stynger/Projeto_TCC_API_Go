@@ -4,6 +4,7 @@ import (
 	"errors"
 	"file_management_tcc/database"
 	"file_management_tcc/models"
+	"file_management_tcc/utils"
 	"io"
 	"net/http"
 	"os"
@@ -37,16 +38,16 @@ func AdicionarArquivo(c *gin.Context) {
 	header, err := c.FormFile("arquivo")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Arquivo não enviado: "  + err.Error(),
+			"error": "Arquivo não enviado: " + err.Error(),
 		})
 		return
 	}
 
 	nome := strings.TrimSpace(c.PostForm("nome"))
 
-	if nome == "" || !filepath.IsLocal(nome) || 
-	filepath.Base(nome) != nome ||
-	strings.ContainsAny(nome, `/\`) {
+	if nome == "" || !filepath.IsLocal(nome) ||
+		filepath.Base(nome) != nome ||
+		strings.ContainsAny(nome, `/\`) {
 		c.JSON(400, gin.H{
 			"error": "Nome de arquivo inválido",
 		})
@@ -158,8 +159,8 @@ func AdicionarArquivo(c *gin.Context) {
 	rel, err := filepath.Rel(rootReal, pastaReal)
 
 	if err != nil || rel == ".." ||
-	strings.HasPrefix(rel, ".."+string(os.PathSeparator)) ||
-	filepath.IsAbs(rel) {
+		strings.HasPrefix(rel, ".."+string(os.PathSeparator)) ||
+		filepath.IsAbs(rel) {
 		c.JSON(400, gin.H{
 			"error": "Acesso fora do armazenamento permitido",
 		})
@@ -220,13 +221,13 @@ func AdicionarArquivo(c *gin.Context) {
 	agora := time.Now()
 
 	arquivo := models.Arquivo{
-		Nome: nome,
-		Caminho: caminhoBanco,
-		Descricao: descricao,
-		Tamanho: uint64(tamanho),
-		CategoriaID: uint(categoriaID),
-		UsuarioID: userID,
-		DataCriacao: agora,
+		Nome:          nome,
+		Caminho:       caminhoBanco,
+		Descricao:     descricao,
+		Tamanho:       uint64(tamanho),
+		CategoriaID:   uint(categoriaID),
+		UsuarioID:     userID,
+		DataCriacao:   agora,
 		DataAlteracao: agora,
 	}
 
@@ -239,11 +240,7 @@ func AdicionarArquivo(c *gin.Context) {
 		return
 	}
 
-	db.Create(&models.Log{
-		Action:  "UPLOAD",
-		Message: "Arquivo '" + nome + "' enviado com sucesso",
-		UserID:  int(userID),
-	})
+	utils.GerarLog("Arquivo '"+nome+"' enviado com sucesso", int(userID), "UPLOAD")
 
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Arquivo armazenado com sucesso",
