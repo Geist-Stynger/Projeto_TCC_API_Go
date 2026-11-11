@@ -21,9 +21,11 @@ func ConfigRoutes(router *gin.Engine) *gin.Engine {
 		usuario := main.Group("usuarios")
 		{
 			usuario.POST("/create", controllers.AdicionarUsuario)
+			usuario.POST("/login", controllers.Login)
 			usuario.GET("/read/:id", controllers.BuscarUsuario)
 			usuario.PUT("/update/:id", controllers.AlterarUsuario)
 			usuario.DELETE("/delete/:id", controllers.ExcluirUsuario)
+			
 		}
 		categoria := main.Group("categorias")
 		{

@@ -5,6 +5,8 @@ import (
 	"file_management_tcc/models"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"file_management_tcc/auth"
+	"golang.org/x/crypto/bcrypt"
 )
 //O nosso CREATE de usuario
 func AdicionarUsuario(c *gin.Context) {
@@ -141,6 +143,63 @@ func BuscarUsuario(c *gin.Context) {
 	}
 	c.JSON(200, gin.H{
 		"data": gin.H{
+			"id_usuario": usuario.IDUsuario,
+			"apelido": usuario.Apelido,
+			"email": usuario.Email,
+		},
+	})
+}
+
+func Login(c *gin.Context) {
+	db := database.GetDatabase()
+
+	var dados struct {
+		Email string `json:"email" binding:"required"`
+		Senha string `json:"senha" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&dados); err != nil {
+		c.JSON(400, gin.H{
+			"error": "E-mail e senha são obrigatórios",
+		})
+		return
+	}
+
+	var usuario models.Usuario
+
+	resultado := db.Where("email = ?", dados.Email).First(&usuario)
+
+	if resultado.Error != nil {
+		c.JSON(401, gin.H{
+			"error": "E-mail ou senha incorretos",
+		})
+		return 
+	}
+	err := bcrypt.CompareHashAndPassword(
+		[]byte(usuario.Senha),
+		[]byte(dados.Senha),
+	)
+
+	if err != nil {
+		c.JSON(401, gin.H{
+			"error": "E-mail ou senha incorretos",
+		})
+		return 
+	}
+
+	token, err := auth.GenerateToken(usuario)
+
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": "Erro ao gerar token de autenticação",
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"message": "Login realizado com sucesso",
+		"token": token,
+		"usuario": gin.H{
 			"id_usuario": usuario.IDUsuario,
 			"apelido": usuario.Apelido,
 			"email": usuario.Email,
