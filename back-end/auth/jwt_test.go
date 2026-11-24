@@ -6,11 +6,11 @@ import (
 	"file_management_tcc/models"
 )
 
-func TestGenerateAndValidateToken(t *testing.T) {
+func TestGenerateAndValidateToken(t *testing.T){
 	usuario := models.Usuario{
 		IDUsuario: 42,
-		Apelido:   "admin",
-		Email:     "admin@local",
+		Apelido: "admin",
+		Email: "admin@local",
 	}
 
 	token, err := GenerateToken(usuario)

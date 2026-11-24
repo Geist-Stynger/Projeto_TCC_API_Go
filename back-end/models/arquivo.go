@@ -22,6 +22,10 @@ type Arquivo struct {
 	DataCriacao   time.Time `json:"data_criacao" binding:"required"`
 	DataAlteracao time.Time `json:"data_alteracao" binding:"required"`
 }
+type AtualizarArquivoInput struct {
+	Descricao string `json:"descricao" binding:"required"`
+	CategoriaID uint `json:"categoria_id" binding:"required"`
+}
 
 func (arquivo *Arquivo) Validate() error {
 	validate := validator.New()

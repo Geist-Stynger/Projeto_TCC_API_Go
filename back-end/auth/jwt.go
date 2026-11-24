@@ -9,11 +9,12 @@ import (
 	"file_management_tcc/models"
 
 	"github.com/golang-jwt/jwt/v5"
+
 )
 
 type Claims struct {
-	UserID  uint   `json:"user_id"`
-	Email   string `json:"email"`
+	UserID uint `json:"user_id"`
+	Email string `json:"email"`
 	Apelido string `json:"apelido"`
 	jwt.RegisteredClaims
 }
@@ -28,16 +29,17 @@ func jwtSecret() []byte {
 
 func GenerateToken(usuario models.Usuario) (string, error) {
 	claims := Claims{
-		UserID:  usuario.IDUsuario,
-		Email:   usuario.Email,
+		UserID: usuario.IDUsuario,
+		Email: usuario.Email,
 		Apelido: usuario.Apelido,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			Issuer:    "file_management_tcc",
+			IssuedAt: jwt.NewNumericDate(time.Now()),
+			Issuer: "file_management_tcc",
 		},
-	}
 
+	}
+	
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(jwtSecret())
 }
@@ -52,12 +54,10 @@ func ValidateToken(tokenString string) (*Claims, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	claims, ok := token.Claims.(*Claims)
 	if !ok || !token.Valid {
 		return nil, errors.New("token inválido")
 	}
-
 	return claims, nil
 }
 
@@ -70,6 +70,5 @@ func GetUserProfileFromToken(tokenString string) (*Claims, error) {
 	if claims.UserID == 0 {
 		return nil, errors.New("perfil do usuário não encontrado no token")
 	}
-
 	return claims, nil
 }
