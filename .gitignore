@@ -2,18 +2,36 @@
 .env
 .env.*
 *.env
+!.env.example
+!front-end/.env.example
 
-# SQLite local
+# SQLite e arquivos enviados localmente
+back-end/files/*.sqlite
 back-end/files/*.sqlite-journal
+back-end/files/*.sqlite-wal
+back-end/files/*.sqlite-shm
+back-end/files/storage/*
+!back-end/files/storage/.gitkeep
 
-# Frontend
+# Back-end Go (binários e cobertura)
+back-end/server-bin
+back-end/*.exe
+back-end/*.test
+back-end/*.out
+back-end/test_api.sh
+
+# Front-end (Node / Vite)
 front-end/node_modules/
 front-end/dist/
 front-end/build/
+front-end/coverage/
+front-end/.vite/
 
-# Arquivos temporários e logs
+# Docker (overrides locais)
+docker-compose.override.yml
+
+# Arquivos temporários, logs e SO
 *.log
 /tmp/
 .DS_Store
-
-back-end/test_api.sh
+Thumbs.db

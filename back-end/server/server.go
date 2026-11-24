@@ -36,7 +36,7 @@ func NewServer() Server {
 	}
 
 	app := gin.Default()
-	app.MaxMultipartMemory = 32 << 20 // 32 MiB
+	app.MaxMultipartMemory = 64 << 20 // 64 MiB em RAM (excedente vai para disco temporário)
 	app.Use(corsMiddleware())
 
 	return Server{

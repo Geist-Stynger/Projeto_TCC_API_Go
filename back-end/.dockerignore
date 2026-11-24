@@ -1,0 +1,9 @@
+.git
+.env
+.env.*
+files/
+*.log
+*.exe
+*.test
+server-bin
+test_api.sh
